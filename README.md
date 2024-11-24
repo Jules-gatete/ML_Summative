@@ -24,7 +24,7 @@ The **Water Intake Estimator** is a mobile application designed to predict the i
 1. Clone the backend repository:  
    ```bash
    git clone https://github.com/Jules-gatete/ML_Summative.git
-   cd ML_Summative/backend
+
    ```  
 2. Install the required dependencies:  
    ```bash
@@ -32,7 +32,7 @@ The **Water Intake Estimator** is a mobile application designed to predict the i
    ```  
 3. Start the FastAPI server:  
    ```bash
-   uvicorn main:app --reload
+uvicorn Daily_Water_Intake_Estimator:app --reload
    ```  
 
 ### Frontend Setup (Flutter)  
@@ -62,7 +62,9 @@ The **Water Intake Estimator** is a mobile application designed to predict the i
 
 - **Dataset**  
   The dataset used for training the water intake prediction model is available here:  
-  [https://www.kaggle.com/datasets/valakhorasani/gym-members-exercise-dataset)  
+  [https://www.kaggle.com/datasets/valakhorasani/gym-members-exercise-dataset)
+
+  
 
 ---
 
@@ -70,14 +72,13 @@ The **Water Intake Estimator** is a mobile application designed to predict the i
 
 1. Launch the app on your mobile device.  
 2. Enter your personal details (age, gender, height, weight, and activity level).  
-3. Click on "Calculate" to get your recommended daily water intake goal.  
-4. Save or reset the value as per your preference.  
+3. Click on "Calculate" to get your recommended daily water intake goal in liters. 
 
 ---
 
 ## Acknowledgments  
 
 - This app leverages machine learning to predict daily water intake based on personalized data.  
-- Special thanks to the **Flutter** and **FastAPI** communities for their powerful tools and support.  
+ 
 - The model was trained using a dataset that includes multiple factors influencing hydration needs.  
 
