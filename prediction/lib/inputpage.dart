@@ -1,6 +1,7 @@
-import 'dart:convert'; // For encoding data to JSON
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'predictionpage.dart'; // Import PredictionPage correctly
 
 class InputPage extends StatefulWidget {
   @override
@@ -16,58 +17,85 @@ class _InputPageState extends State<InputPage> {
   String? selectedWorkType;
 
   Future<void> getWaterIntakePrediction() async {
-    final url = Uri.parse('http://10.0.2.2:8000/predict-water-intake');
+    if (ageController.text.isEmpty ||
+        weightController.text.isEmpty ||
+        heightController.text.isEmpty ||
+        selectedGender == null ||
+        selectedWorkType == null) {
+      showErrorDialog('All fields are required');
+      return;
+    }
 
-    final response = await http.get(
-      url.replace(queryParameters: {
-        'age': ageController.text,
-        'gender': selectedGender ?? '',
-        'height': heightController.text,
-        'weight': weightController.text,
-        'workout_type': selectedWorkType ?? '',
-      }),
-    );
+    try {
+      final age = int.parse(ageController.text);
+      final weight = double.parse(weightController.text);
+      final height = double.parse(heightController.text);
 
-    if (response.statusCode == 200) {
-      // If the server returns a 200 OK response, parse the prediction
-      final data = jsonDecode(response.body);
-      final predictedWaterIntake = data['predicted_daily_water_intake'];
-      
-      // Show the prediction in an alert dialog
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Predicted Daily Water Intake'),
-          content: Text(predictedWaterIntake),
+      final url = Uri.parse('http://10.0.2.2:8000/predict/');
+
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          'age': age,
+          'gender': selectedGender ?? '',
+          'height': height,
+          'weight': weight,
+          'workout_type': selectedWorkType ?? '',
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final predictedWaterIntake = data['predicted_water_intake'];
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                PredictionPage(waterGoal: predictedWaterIntake.toString()),
+          ),
+        );
+      } else {
+        showErrorDialog(jsonDecode(response.body)['detail']);
+      }
+    } catch (e) {
+      showErrorDialog('Invalid input. Please check your values.');
+    }
+  }
+
+  void showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(message),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.pop(context);
               },
               child: Text('OK'),
             ),
           ],
-        ),
-      );
-    } else {
-      // If the server did not return a 200 OK response, show an error
-      throw Exception('Failed to load prediction');
-    }
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get screen dimensions
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(size.height * 0.1), // Responsive height
+        preferredSize: Size.fromHeight(size.height * 0.1),
         child: AppBar(
           leading: IconButton(
-            icon: Image.asset('assets/back.png'), // Replace with your image path
+            icon: Image.asset('assets/back.png'),
             onPressed: () {
-              Navigator.pop(context); // Go back to the previous screen
+              Navigator.pop(context);
             },
           ),
           backgroundColor: Colors.white,
@@ -77,7 +105,7 @@ class _InputPageState extends State<InputPage> {
             child: Text(
               'Hydrate Your Way to Wellness',
               style: TextStyle(
-                fontSize: size.width * 0.05, 
+                fontSize: size.width * 0.05,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
               ),
@@ -92,7 +120,7 @@ class _InputPageState extends State<InputPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SizedBox(height: size.height * 0.05), // Responsive spacing
+              SizedBox(height: size.height * 0.05),
               TextField(
                 controller: ageController,
                 keyboardType: TextInputType.number,
@@ -161,7 +189,8 @@ class _InputPageState extends State<InputPage> {
                 value: selectedWorkType,
                 hint: Text('Work Type'),
                 items: [
-                  DropdownMenuItem(value: 'sedentary', child: Text('Sedentary')),
+                  DropdownMenuItem(
+                      value: 'sedentary', child: Text('Sedentary')),
                   DropdownMenuItem(value: 'light', child: Text('Light')),
                   DropdownMenuItem(value: 'moderate', child: Text('Moderate')),
                   DropdownMenuItem(value: 'heavy', child: Text('Heavy')),
@@ -192,7 +221,8 @@ class _InputPageState extends State<InputPage> {
                 ),
                 child: Text(
                   'Calculate',
-                  style: TextStyle(fontSize: size.width * 0.045, color: Colors.white),
+                  style: TextStyle(
+                      fontSize: size.width * 0.045, color: Colors.white),
                 ),
               ),
             ],
