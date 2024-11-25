@@ -26,10 +26,10 @@ except FileNotFoundError:
 # Input schema using Pydantic
 class UserInput(BaseModel):
     age: int
-    gender: Literal["male", "female"]
+    gender: Literal["", "male", "female"]
     height: float  # Height in meters
     weight: float  # Weight in kg
-    workout_type: Literal["sedentary", "light", "moderate", "heavy"]
+    workout_type: Literal["", "sedentary", "light", "moderate", "heavy"]
 
     @root_validator(pre=True)
     def normalize_fields(cls, values):

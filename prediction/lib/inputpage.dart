@@ -31,7 +31,8 @@ class _InputPageState extends State<InputPage> {
       final weight = double.parse(weightController.text);
       final height = double.parse(heightController.text);
 
-      final url = Uri.parse('http://10.0.2.2:8000/predict/');
+      // final url = Uri.parse('http://10.0.2.2:8000/predict/'); local host link url
+      final url = Uri.parse('https://ml-summative-3.onrender.com/predict/');
 
       final response = await http.post(
         url,
