@@ -6,7 +6,14 @@ The **Water Intake Estimator** is a mobile application designed to predict the i
 ---
 
 ## Features  
-- **User Input**: Input personal details like age, gender, height, weight, and activity level.  
+- **User Input**: Input personal details like :
+     - age:
+     - gender:(male, female)
+     - height: 
+     - weight:
+and 
+     - workout_type: ("sedentary", "light", "moderate", and  "heavy")
+       
 - **Prediction**: Calculate the recommended daily water intake using a trained ML model.  
 - **Save and Reset**: Save the calculated water intake goal or reset it as needed.  
 - **Hydration Guide**: User-friendly interface to guide users on their hydration journey.  
