@@ -1,83 +1,85 @@
-# Import necessary libraries
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, root_validator
+from typing import Literal
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
 import joblib
+from sklearn.preprocessing import LabelEncoder
 
-# Initialize FastAPI
+# Initialize FastAPI app
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins (use more specific origins in production)
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Recreate LabelEncoder and fit it on all categories (must match training data)
+# Recreate LabelEncoder and fit it on all categories
 label_encoder_gender = LabelEncoder()
 label_encoder_workout_type = LabelEncoder()
 
-# These should have been fitted on the entire dataset during training
-label_encoder_gender.fit(['male', 'female'])
-label_encoder_workout_type.fit(['sedentary', 'light', 'moderate', 'heavy'])
+# Fitting on the categories used during model training
+label_encoder_gender.fit(["male", "female"])
+label_encoder_workout_type.fit(["sedentary", "light", "moderate", "heavy"])
 
-# Load the trained Random Forest model (if saved previously)
+# Load the trained Random Forest model
 try:
-    model_pipeline = joblib.load('random_forest_model.joblib')  # Load your trained RandomForest model
-    print("Model loaded successfully!")
+    model_pipeline = joblib.load("random_forest_model.joblib")  
 except FileNotFoundError:
-    print("Error: Model file not found. Please ensure the model is saved correctly.")
+    raise Exception("Model file not found. Please ensure it is saved correctly.")
 
-# Pydantic model for the request body
-class WaterIntakeRequest(BaseModel):
+# Input schema using Pydantic
+class UserInput(BaseModel):
     age: int
-    gender: str
-    height: float
-    weight: float
-    workout_type: str
+    gender: Literal["male", "female"]
+    height: float  # Height in meters
+    weight: float  # Weight in kg
+    workout_type: Literal["sedentary", "light", "moderate", "heavy"]
 
-# Root GET endpoint
+    @root_validator(pre=True)
+    def normalize_fields(cls, values):
+        """
+        Normalize gender and workout_type to lowercase for consistency.
+        """
+        if "gender" in values:
+            values["gender"] = values["gender"].lower()
+        if "workout_type" in values:
+            values["workout_type"] = values["workout_type"].lower()
+        return values
+
 @app.get("/")
-async def read_root():
-    return {"message": "Welcome to the Water Intake Estimator"}
+def read_root():
+    """
+    Root endpoint to confirm the API is running.
+    """
+    return {"message": "Welcome to the Water Intake Prediction API"}
 
-# GET endpoint for water intake prediction with query parameters
-@app.get("/predict-water-intake")
-async def predict_water_intake_get(age: int, gender: str, height: float, weight: float, workout_type: str):
+@app.post("/predict/")
+def predict_water_intake(user_input: UserInput):
+    """
+    Predict daily water intake based on user inputs.
+    """
+    # Validate inputs
+    if not (0 <= user_input.age <= 120):
+        raise HTTPException(status_code=400, detail="Enter a valid age in years.")
+    if not (0.5 <= user_input.height <= 2.5):
+        raise HTTPException(status_code=400, detail="Enter a valid height in meters.")
+    if not (10 <= user_input.weight <= 300):
+        raise HTTPException(status_code=400, detail="Enter a valid weight in kilograms.")
+
+    # Encode categorical inputs
     try:
-        # Validate and process input for GET request (query parameters)
-        gender = gender.strip().lower()
-        if gender not in ['male', 'female']:
-            raise HTTPException(status_code=400, detail="Invalid gender. Please provide 'male' or 'female'.")
-        encoded_gender = label_encoder_gender.transform([gender])[0]
+        encoded_gender = label_encoder_gender.transform([user_input.gender])[0]
+        encoded_workout_type = label_encoder_workout_type.transform([user_input.workout_type])[0]
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid input for categorical variables: {str(e)}")
 
-        work_type = workout_type.strip().lower()
-        if work_type not in ['sedentary', 'light', 'moderate', 'heavy']:
-            raise HTTPException(status_code=400, detail="Invalid workout type. Please provide 'sedentary', 'light', 'moderate', or 'heavy'.")
-        encoded_work_type = label_encoder_workout_type.transform([work_type])[0]
+    # Prepare input DataFrame for prediction
+    input_data = pd.DataFrame({
+        "Age": [user_input.age],
+        "Height (m)": [user_input.height],
+        "Weight (kg)": [user_input.weight],
+        "Gender": [encoded_gender],
+        "Workout_Type": [encoded_workout_type]
+    })
 
-        # Prepare user input for prediction
-        input_data = {
-            'Age': [age],
-            'Height (m)': [height],
-            'Weight (kg)': [weight],
-            'Gender': [encoded_gender],  # Use encoded value for gender
-            'Workout_Type': [encoded_work_type]  # Use encoded value for workout type
-        }
-
-        # Convert to DataFrame
-        input_df = pd.DataFrame(input_data)
-
-        # Predict the target value (daily water intake)
-        prediction = model_pipeline.predict(input_df)  # Use the Random Forest model to make predictions
-
-        # Return the prediction with the word "liters"
-        return {"predicted_daily_water_intake": str(round(prediction[0], 2)) + " liters"}  # Return as JSON response
+    # Predict using the model
+    try:
+        prediction = model_pipeline.predict(input_data)
+        return {"predicted_water_intake": round(prediction[0], 2)}  
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# To run the app: `uvicorn Daily_Water_Intake_Estimator:app --reload`
+        raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
