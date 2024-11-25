@@ -15,8 +15,7 @@ and
      - workout_type: ("sedentary", "light", "moderate", and  "heavy")
        
 - **Prediction**: Calculate the recommended daily water intake using a trained ML model.  
-- **Save and Reset**: Save the calculated water intake goal or reset it as needed.  
-- **Hydration Guide**: User-friendly interface to guide users on their hydration journey.  
+- **Hydration Guide**: User-friendly interface to display & guide users on their hydration journey.  
 
 ---
 
