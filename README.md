@@ -52,12 +52,12 @@ uvicorn Daily_Water_Intake_Estimator:app --reload
 
 - **Video Demonstration**  
   Watch the video walkthrough of the app here:  
-  [https://vimeo.com/1032884521/a2700e91a2?share=copy)  
+  [https://vimeo.com/1033258692/ba62359d27?share=copy)  
 
 - **Deployed API**  
   The API is deployed and publicly available on Render:  
-  [Water Intake Estimator - Deployed API](https://ml-summative.onrender.com)  
-  Swagger UI for testing:  
+  [Water Intake Estimator - Deployed API](https://ml-summative-3.onrender.com)  
+  Swagger UI for testing locally:  
   [http://127.0.0.1:8000/docs#/default/predict_water_intake_get_predict_water_intake_get)  
 
 - **Dataset**  
@@ -78,7 +78,7 @@ uvicorn Daily_Water_Intake_Estimator:app --reload
 
 ## Acknowledgments  
 
-- This app leverages machine learning to predict daily water intake based on personalized data.  
+- This app leverages machine learning model to predict daily water intake based on personalized data.  
  
 - The model was trained using a dataset that includes multiple factors influencing hydration needs.  
 
